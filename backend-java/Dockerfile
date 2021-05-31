@@ -2,7 +2,10 @@ FROM maven:3.6.0-jdk-8 as build
 
 ARG FOR_BRANCH=master
 RUN mkdir /usr/app
-RUN git clone https://github.com/forpdi/plataforma-for.git /usr/app/repo
+RUN git clone https://github.com/s0ckz/plataforma-for.git /usr/app/repo
+
+WORKDIR /usr/app/repo
+RUN git checkout upload-fix
 
 WORKDIR /usr/app/repo/backend-java
 RUN git checkout ${FOR_BRANCH}

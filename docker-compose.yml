@@ -6,6 +6,10 @@ services:
                 environment:
                         MYSQL_ROOT_PASSWORD: docker12345
                         MYSQL_DATABASE: plataformafor
+                volumes:
+                        - /opt/forpdi/db:/var/lib/mysql
+                        - /opt/forpdi/pdf:/var/forpdi/pdf
+                        - /opt/forpdi/files:/var/forpdi/files
         forpdi-backend:
                 build: ./backend-java
                 image: platfor-backend
