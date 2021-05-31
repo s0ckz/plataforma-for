@@ -2,11 +2,15 @@ package org.forpdi.core.user;
 
 import java.io.File;
 import java.net.UnknownHostException;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.mail.EmailException;
 import org.forpdi.core.abstractions.AbstractController;
@@ -41,8 +45,6 @@ import br.com.caelum.vraptor.boilerplate.NoCache;
 import br.com.caelum.vraptor.boilerplate.bean.PaginatedList;
 import br.com.caelum.vraptor.boilerplate.util.CryptManager;
 import br.com.caelum.vraptor.boilerplate.util.GeneralUtils;
-import br.com.caelum.vraptor.observer.upload.UploadSizeLimit;
-import br.com.caelum.vraptor.observer.upload.UploadedFile;
 
 /**
  * @author Renato R. R. de Oliveira
@@ -1143,37 +1145,41 @@ public class UserController extends AbstractController {
 	 */
 	@Post("api/file/upload")
 	@NoCache
-	@UploadSizeLimit(fileSizeLimit=50 * 1024 * 1024)
-	public void uploadFile(UploadedFile file) {
-		try {
-			if (file == null){
-				this.fail("upload falhou");
-				return;
-			}
+	public void uploadFile() {
+        DiskFileItemFactory factory = new DiskFileItemFactory();
+        factory.setSizeThreshold(50 * 1024 * 1024);
+        factory.setRepository(new File(System.getProperty("java.io.tmpdir")));
+        ServletFileUpload upload = new ServletFileUpload(factory);
+        upload.setFileSizeMax(50 * 1024 * 1024);
+        upload.setSizeMax(50 * 1024 * 1024);
+ 
+        try {
+            List<FileItem> formItems = upload.parseRequest(request);
+ 
+            if (formItems != null && formItems.size() > 0) {
+                for (FileItem item : formItems) {
+                    // processes only fields that are not form fields
+                    if (!item.isFormField()) {
+                    	File file = new File(item.getName());
 
-			Archive archive = new Archive();
-			archive.setName(file.getFileName());
-			File targetFile = new File(SystemConfigs.getConfig("store.files")+File.separator+archive.getName());
-			FileUtils.copyInputStreamToFile(file.getFile(), targetFile);
+                    	Archive archive = new Archive();
+            			archive.setName(file.getName());
+            			File targetFile = new File(SystemConfigs.getConfig("store.files")+File.separator+archive.getName());
+                        item.write(targetFile);
 
-			this.dbbackup.persist(archive);
-			this.success(domain.getBaseUrl() + "/forpdi/api/file/" + archive.getId());
+            			this.dbbackup.persist(archive);
+            			this.success(domain.getBaseUrl() + "/forpdi/api/file/" + archive.getId());
+            			return;
+                    }
+                }
+            }
+        } catch (Throwable ex) {
+			LOGGER.error("Error on the file upload.", ex);
+			this.fail(ex.getMessage());
+			return;
+        }
 
-		} catch (Throwable ex) {
-			LOGGER.error("Error while proxying the file upload.", ex);
-			 this.fail(ex.getMessage());
-		}
-
-//		try {
-//			String fileUrl = StoragerUtils.pipeMultipartFile(this.request.getInputStream(),
-//					this.request.getContentType(), this.response);
-//			this.success(fileUrl);
-//		} catch (Throwable ex) {
-//			LOGGER.error("Error while proxying the file upload.", ex);
-//			// this.fail(ex.getMessage());
-//		} finally {
-//			this.result.nothing();
-//		}
+		this.fail("upload falhou");
 	}
 
 	/**
