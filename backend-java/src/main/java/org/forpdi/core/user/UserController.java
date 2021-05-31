@@ -1144,17 +1144,12 @@ public class UserController extends AbstractController {
 	@Post("api/file/upload")
 	@NoCache
 	@UploadSizeLimit(fileSizeLimit=50 * 1024 * 1024)
-	public void uploadFile(UploadedFile file) {
+	public void uploadFile() {
 		try {
-			if (file == null){
-				this.fail("upload falhou");
-				return;
-			}
-
 			Archive archive = new Archive();
 			archive.setName(file.getFileName());
 			File targetFile = new File(SystemConfigs.getConfig("store.files")+File.separator+archive.getName());
-			FileUtils.copyInputStreamToFile(file.getFile(), targetFile);
+			FileUtils.copyInputStreamToFile(this.request.getInputStream(), targetFile);
 
 			this.dbbackup.persist(archive);
 			this.success(domain.getBaseUrl() + "/forpdi/api/file/" + archive.getId());
