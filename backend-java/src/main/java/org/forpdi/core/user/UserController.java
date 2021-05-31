@@ -1,20 +1,24 @@
 package org.forpdi.core.user;
 
+import java.io.File;
 import java.net.UnknownHostException;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.mail.EmailException;
 import org.forpdi.core.abstractions.AbstractController;
 import org.forpdi.core.bean.SessionInfo;
+import org.forpdi.core.company.BackupAndRestoreHelper;
 import org.forpdi.core.company.CompanyDomain;
 import org.forpdi.core.company.CompanyUser;
 import org.forpdi.core.event.Current;
 import org.forpdi.core.notification.NotificationBS;
 import org.forpdi.core.notification.NotificationSetting;
 import org.forpdi.core.notification.NotificationType;
+import org.forpdi.core.properties.SystemConfigs;
 import org.forpdi.core.user.auth.UserAccessToken;
 import org.forpdi.core.user.auth.UserSession;
 import org.forpdi.core.user.authz.AccessLevels;
@@ -24,6 +28,7 @@ import org.forpdi.core.user.authz.permission.ManageUsersPermission;
 import org.forpdi.core.user.authz.permission.ViewUsersPermission;
 import org.forpdi.planning.permissions.PermissionDTO;
 import org.forpdi.planning.structure.StructureBS;
+import org.forpdi.system.Archive;
 import org.forpdi.system.IndexController;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -36,7 +41,8 @@ import br.com.caelum.vraptor.boilerplate.NoCache;
 import br.com.caelum.vraptor.boilerplate.bean.PaginatedList;
 import br.com.caelum.vraptor.boilerplate.util.CryptManager;
 import br.com.caelum.vraptor.boilerplate.util.GeneralUtils;
-import br.com.caelum.vraptor.boilerplate.util.StoragerUtils;
+import br.com.caelum.vraptor.observer.upload.UploadSizeLimit;
+import br.com.caelum.vraptor.observer.upload.UploadedFile;
 
 /**
  * @author Renato R. R. de Oliveira
@@ -57,6 +63,9 @@ public class UserController extends AbstractController {
 	private HttpServletRequest request;
 	@Inject
 	private NotificationBS notificationBS;
+
+	@Inject
+	private BackupAndRestoreHelper dbbackup;
 
 	/**
 	 * Salvar um usuário
@@ -1134,18 +1143,37 @@ public class UserController extends AbstractController {
 	 */
 	@Post("api/file/upload")
 	@NoCache
-	public void uploadFile() {
-
+	@UploadSizeLimit(fileSizeLimit=50 * 1024 * 1024)
+	public void uploadFile(UploadedFile file) {
 		try {
-			String fileUrl = StoragerUtils.pipeMultipartFile(this.request.getInputStream(),
-					this.request.getContentType(), this.response);
-			this.success(fileUrl);
+			if (file == null){
+				this.fail("upload falhou");
+				return;
+			}
+
+			Archive archive = new Archive();
+			archive.setName(file.getFileName());
+			File targetFile = new File(SystemConfigs.getConfig("store.files")+File.separator+archive.getName());
+			FileUtils.copyInputStreamToFile(file.getFile(), targetFile);
+
+			this.dbbackup.persist(archive);
+			this.success(domain.getBaseUrl() + "/forpdi/api/file/" + archive.getId());
+
 		} catch (Throwable ex) {
 			LOGGER.error("Error while proxying the file upload.", ex);
-			// this.fail(ex.getMessage());
-		} finally {
-			this.result.nothing();
+			 this.fail(ex.getMessage());
 		}
+
+//		try {
+//			String fileUrl = StoragerUtils.pipeMultipartFile(this.request.getInputStream(),
+//					this.request.getContentType(), this.response);
+//			this.success(fileUrl);
+//		} catch (Throwable ex) {
+//			LOGGER.error("Error while proxying the file upload.", ex);
+//			// this.fail(ex.getMessage());
+//		} finally {
+//			this.result.nothing();
+//		}
 	}
 
 	/**
