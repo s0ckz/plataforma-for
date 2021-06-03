@@ -314,7 +314,7 @@ export default React.createClass({
 												<input ref={"attach-checkbox-"+idx} type="checkbox" onClick={this.checkAttachment}/>
 											</td>
 											<td>
-												<a href={attachment.fileLink} download>{attachment.name}</a>
+												<a href={attachment.fileLink}>{attachment.name}</a>
 											</td>
 											<td>
 												{attachment.id == this.state.editId ?
