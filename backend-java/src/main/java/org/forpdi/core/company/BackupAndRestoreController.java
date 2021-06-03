@@ -22,7 +22,6 @@ import br.com.caelum.vraptor.Get;
 import br.com.caelum.vraptor.Post;
 import br.com.caelum.vraptor.boilerplate.AbstractController;
 import br.com.caelum.vraptor.boilerplate.NoCache;
-import br.com.caelum.vraptor.observer.download.FileDownload;
 import br.com.caelum.vraptor.observer.upload.UploadSizeLimit;
 import br.com.caelum.vraptor.observer.upload.UploadedFile;
 
@@ -204,35 +203,39 @@ public class BackupAndRestoreController extends AbstractController  {
 	 * Leitura de arquivo local.
 	 * 
 	 * @param Id do arquivo.
-	 * @return 
 	 * 
 	 */
 	@Get("api/file/{id}")
 	@NoCache
-	public FileDownload readFile(@NotNull Long id) {
+	public void readFile(@NotNull Long id) {
 		
 		Archive file =this.dbbackup.exists(id, Archive.class);
 		
 		if(file ==null){
 			this.fail("(No such file or directory)");
-			return null;
+			return;
 		}
 		LOGGER.error("arquivo: "+SystemConfigs.getConfig("store.files") + file.getId() + "-" + file.getName());
 		
 		try{
 			File initialFile = new File(SystemConfigs.getConfig("store.files") + file.getId() + "-" + file.getName());
 			
-			if(initialFile.exists()) {
-				return new FileDownload(initialFile, null, file.getName(), true);
+			byte[] bytes = new byte[(int)initialFile.length()];
+			
+			if(initialFile.exists()){
+				response.setHeader("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"");
+				FileInputStream fis = new FileInputStream(initialFile);
+				fis.read(bytes);
+				fis.close();
+				response.getOutputStream().write(bytes);
+				response.getOutputStream().close();
 			}else {
 				this.fail("(No such file or directory):"+SystemConfigs.getConfig("store.files") + file.getId() + "-" + file.getName() );
 				this.fail("arquivo: "+SystemConfigs.getConfig("store.files") + file.getId() + "-" + file.getName());
-				return null;
 			}
 		} catch (Throwable ex) {
 			LOGGER.error("Error while proxying the file upload.", ex);
 			this.fail("(No such file or directory): "+SystemConfigs.getConfig("store.files") + file.getId() + "-" + file.getName() );
-			return null;
 		}
 	}
 
