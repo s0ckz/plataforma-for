@@ -229,7 +229,6 @@ public class BackupAndRestoreController extends AbstractController  {
 				fis.close();
 				response.getOutputStream().write(bytes);
 				response.getOutputStream().close();
-				this.result.nothing();
 			}else {
 				this.fail("(No such file or directory):"+SystemConfigs.getConfig("store.files") + file.getId() + "-" + file.getName() );
 				this.fail("arquivo: "+SystemConfigs.getConfig("store.files") + file.getId() + "-" + file.getName());
