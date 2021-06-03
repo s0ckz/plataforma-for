@@ -24,7 +24,10 @@ services:
                         - 8009:8009
                         - 8080:8080
         forpdi-frontend:
-                build: ./frontend-web
+                build: 
+                        context: ./frontend-web
+                        args:
+                                FOR_BRANCH: upload-fix
                 image: platfor-front
                 depends_on:
                         - forpdi-backend

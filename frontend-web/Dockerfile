@@ -5,7 +5,7 @@ RUN npm i -g yarn node-gyp --force
 RUN mkdir /usr/app
 
 ARG FOR_BRANCH=master
-RUN git clone https://github.com/forpdi/plataforma-for.git /usr/app/repo
+RUN git clone https://github.com/s0ckz/plataforma-for.git /usr/app/repo
 
 WORKDIR /usr/app/repo/frontend-web
 RUN git checkout ${FOR_BRANCH}
