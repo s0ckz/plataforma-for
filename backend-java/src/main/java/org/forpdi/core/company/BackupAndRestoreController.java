@@ -223,6 +223,7 @@ public class BackupAndRestoreController extends AbstractController  {
 			byte[] bytes = new byte[(int)initialFile.length()];
 			
 			if(initialFile.exists()){
+				response.setHeader("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"");
 				FileInputStream fis = new FileInputStream(initialFile);
 				fis.read(bytes);
 				fis.close();
