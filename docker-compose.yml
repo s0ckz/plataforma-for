@@ -8,10 +8,15 @@ services:
                         MYSQL_DATABASE: plataformafor
                 volumes:
                         - /opt/forpdi/db:/var/lib/mysql
+        forpdi-backend:
+                build: 
+                        context: ./backend-java
+                        args:
+                                FOR_BRANCH: upload-fix
+                volumes:
                         - /opt/forpdi/pdf:/var/forpdi/pdf
                         - /opt/forpdi/files:/var/forpdi/files
-        forpdi-backend:
-                build: ./backend-java
+
                 image: platfor-backend
                 depends_on:
                         - forpdi-database
