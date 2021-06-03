@@ -1168,7 +1168,7 @@ public class UserController extends AbstractController {
 
             			File targetFile = new File(SystemConfigs.getConfig("store.files") + File.separator + archive.getId()+ "-" + archive.getName());
             			item.write(targetFile);
-            			this.success(domain.getBaseUrl() + "/forpdi/api/file/" + archive.getId());
+            			this.success(domain.getBaseUrl() + "forpdi/api/file/" + archive.getId());
             			return;
                     }
                 }
