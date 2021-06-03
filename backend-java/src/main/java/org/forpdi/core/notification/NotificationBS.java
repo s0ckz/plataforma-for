@@ -176,7 +176,7 @@ public class NotificationBS extends HibernateBusiness {
 		}
 		this.persist(notification);
 		this.emailTask.add(new NotificationEmail(user.getEmail(), user.getName(), builder.getSubject(),
-				builder.getBody(), attachment.getName()));
+				builder.getBody(), attachment.getId() + "-" + attachment.getName()));
 	}
 
 	/**

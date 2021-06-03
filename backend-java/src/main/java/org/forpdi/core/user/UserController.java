@@ -1164,10 +1164,10 @@ public class UserController extends AbstractController {
 
                     	Archive archive = new Archive();
             			archive.setName(file.getName());
-            			File targetFile = new File(SystemConfigs.getConfig("store.files")+File.separator+archive.getName());
-                        item.write(targetFile);
-
             			this.dbbackup.persist(archive);
+
+            			File targetFile = new File(SystemConfigs.getConfig("store.files") + File.separator + archive.getId()+ "-" + archive.getName());
+            			item.write(targetFile);
             			this.success(domain.getBaseUrl() + "/forpdi/api/file/" + archive.getId());
             			return;
                     }
